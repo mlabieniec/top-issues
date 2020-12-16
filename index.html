@@ -4,41 +4,60 @@
     <title></title>
     <link href='assets/style.css' rel='stylesheet' />
 </head>
-<body class="prose" style="margin: 50px;">
+<body>
 
-<h1 id="title">Top Github Issues</h1>
-<a href="/top-issues/#!aws-amplify/amplify-js" target="_blank">JS</a> | 
-<a href="/top-issues/#!aws-amplify/amplify-ios" target="_blank">iOS</a> | 
-<a href="/top-issues/#!aws-amplify/amplify-android" target="_blank">Android</a> | 
-<a href="/top-issues/#!aws-amplify/amplify-cli" target="_blank">CLI</a> | 
-<a href="/top-issues/#!aws-amplify/amplify-flutter" target="_blank">Flutter</a>
+<div class="prose content">
+    <h1 id="title">Top Github Issues</h1>
+    <div class="repos">
+        <button class="repo-btn" data-repo="aws-amplify/amplify-js" href="/top-issues/#!aws-amplify/amplify-js" target="_blank">JS</button>
+        <button class="repo-btn" data-repo="aws-amplify/amplify-ios" href="/top-issues/#!aws-amplify/amplify-ios" target="_blank">iOS</button>
+        <button class="repo-btn" data-repo="aws-amplify/amplify-android"  href="/top-issues/#!aws-amplify/amplify-android" target="_blank">Android</button>
+        <button class="repo-btn" data-repo="aws-amplify/amplify-cli"  href="/top-issues/#!aws-amplify/amplify-cli" target="_blank">CLI</button>
+        <button class="repo-btn" data-repo="aws-amplify/amplify-flutter"  href="/top-issues/#!aws-amplify/amplify-flutter" target="_blank">Flutter</button>
+    </div>
+    <div id="error" class="note error" style="display: none;"></div>
+    <div id="loading" class="loading"></div>
 
-<div id="error" class="note error" style="display: none;"></div>
-<div id="loading" class="loading"></div>
-
-<table class="small sortable">
-    <thead>
-        <tr>
-            <th class="sorttable_numeric"></th>
-            <th>Issue</th>
-            <th class="sorttable_numeric">Comments</th>
-            <th class="sorttable_numeric">Reactions</th>
-            <th class="sorttable_numeric" width="200">Labels</th>
-            <th>Assignee</th>
-            <th class="sorttable_numeric">Created</th>
-            <th class="sorttable_numeric">Updated</th>
-            <th class="sorttable_numeric">Score</th>
-        </tr>
-    </thead>
-    <tbody id="issues">
-    </tbody>
-</table>
+    <table class="small sortable">
+        <thead>
+            <tr>
+                <th class="sorttable_numeric"></th>
+                <th>Issue</th>
+                <th class="sorttable_numeric">Comments</th>
+                <th class="sorttable_numeric">Reactions</th>
+                <th class="sorttable_numeric" width="200">Labels</th>
+                <th>Assignee</th>
+                <th class="sorttable_numeric">Created</th>
+                <th class="sorttable_numeric">Updated</th>
+                <th class="sorttable_numeric">Score</th>
+            </tr>
+        </thead>
+        <tbody id="issues">
+        </tbody>
+    </table>
+</div>
 
 <script src="assets/fetch.js"></script>
 <script src="assets/moment.js"></script>
 <script src="assets/sorttable.js"></script>
 
 <script>
+
+let repository = getHash();
+let githubUsername = getParam('github_username') || denull(localStorage.getItem("githubUsername"));
+let githubAccessToken = getParam('github_access_token') || denull(localStorage.getItem("githubAccessToken"));
+
+localStorage.setItem("githubUsername", githubUsername);
+localStorage.setItem("githubAccessToken", githubAccessToken);
+
+let repoBtn = document.querySelector(".repos");
+repoBtn.addEventListener("click", function(event) {
+    if (event.target.matches("button")) {
+        repository = event.target.getAttribute("data-repo");
+        console.log(`Loading: ${repository}`);
+        init();
+    }
+});
 
 function showError(message) {
     document.getElementById('loading').style.display = 'none';
@@ -47,12 +66,10 @@ function showError(message) {
     errorElement.innerHTML = message;
 }
 
-const repository = getHash();
-const githubUsername = getParam('github_username') || denull(localStorage.getItem("githubUsername"));
-const githubAccessToken = getParam('github_access_token') || denull(localStorage.getItem("githubAccessToken"));
-
-localStorage.setItem("githubUsername", githubUsername);
-localStorage.setItem("githubAccessToken", githubAccessToken);
+function hideError() {
+    const errorElement = document.getElementById('error');
+    errorElement.style.display = 'none';
+}
 
 function fetchGithubIssues(repository) {
     return fetchGithubIssuesPage(repository, 0).then(function(firstPage) {
@@ -120,7 +137,7 @@ function getParam(name) {
 function getHash() {
     const match = window.location.hash.match(/#!([a-zA-Z0-9-_]+\/[a-zA-Z0-9-_\.]+)/);
     if (!match) {
-        showError('<strong>No repository specified.</strong> Please append a repository name as a URL fragment like <a href="https://mlabieniec.github.io/top-issues/#!aws-amplify/amplify-js">https://mlabieniec.github.io/top-issues/#!aws-amplify/amplify-js</a> or click a link above.')
+        return showError('<strong>No repository specified.</strong> Please append a repository name as a URL fragment like <a href="https://mlabieniec.github.io/top-issues/#!aws-amplify/amplify-js">https://mlabieniec.github.io/top-issues/#!aws-amplify/amplify-js</a> or click a link above.')
     }
     return match[1];
 }
@@ -184,33 +201,44 @@ function denull(value) {
     return value === "null" ? null : value;
 }
 
-document.getElementById('title').innerText = `Top Issues for ${repository}`
-
-fetchSettings(repository).then(function(settings) {
-    fetchGithubIssues(repository).then(function(issues) {
+function init() {
+    document.getElementById('title').innerText = `Top Issues for ${repository}`
+    document.getElementById('loading').style.display = 'block';
+    fetchSettings(repository).then(function(settings) {
+        hideError();
+        fetchGithubIssues(repository).then(function(issues) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('issues').innerHTML = issues.sort(compareScores.bind(this, settings)).filter((issue) => !issue.pull_request).map((issue, index) => `
+            <tr>
+            <td>${index + 1}</td>
+            <td><a href="${issue.html_url}">${issue.title}</a></td>
+            <td title="${getCommentsScore(settings, issue).toFixed(2)} points">${issue.comments}</td>
+            <td title="${getReactionsScore(settings, issue)} points" sorttable_customkey=${getReactionsScore(settings, issue)}>${getReactionsHTML(issue)}</td>
+            <td title="${getLabelsScore(settings, issue)} points" sorttable_customkey=${getLabelsScore(settings, issue)}>${
+                issue.labels.map((label) => {
+                    return `<a
+                    href="https://github.com/${repository}/issues?q=is%3Aissue+is%3Aopen+label%3A${label.name.replace(' ', '+')}"
+                    class="button" style="font-size: 10px; padding: 0 5px 0 5px; background-color: #${label.color};"
+                    >${label.name}</a>`
+                }).join('\n')
+            }</td>
+            <td title="Not scored">${issue.assignee ? `<a href="${issue.assignee.html_url}"><img width="20" height="20" style="display:inline-block;" class="round" src="${issue.assignee.avatar_url}"> ${issue.assignee.login}</a>` : ''}</td>
+            <td title="${getCreatedAtScore(settings, issue).toFixed(2)} points" sorttable_customkey=${moment(issue.created_at).unix()}>${moment(issue.created_at).fromNow()}</td>
+            <td title="Not scored" sorttable_customkey=${moment(issue.updated_at).unix()}>${moment(issue.updated_at).fromNow()}</td>
+            <td>${getScore(settings, issue).toFixed(1)}</td>
+            </tr>
+            `).join('\n');
+        }).catch((e)=>{
+            document.getElementById('loading').style.display = 'none';
+            console.log(e);
+        });
+    }).catch((e)=>{
         document.getElementById('loading').style.display = 'none';
-        document.getElementById('issues').innerHTML = issues.sort(compareScores.bind(this, settings)).filter((issue) => !issue.pull_request).map((issue, index) => `
-        <tr>
-        <td>${index + 1}</td>
-        <td><a href="${issue.html_url}">${issue.title}</a></td>
-        <td title="${getCommentsScore(settings, issue).toFixed(2)} points">${issue.comments}</td>
-        <td title="${getReactionsScore(settings, issue)} points" sorttable_customkey=${getReactionsScore(settings, issue)}>${getReactionsHTML(issue)}</td>
-        <td title="${getLabelsScore(settings, issue)} points" sorttable_customkey=${getLabelsScore(settings, issue)}>${
-            issue.labels.map((label) => {
-                return `<a
-                href="https://github.com/${repository}/issues?q=is%3Aissue+is%3Aopen+label%3A${label.name.replace(' ', '+')}"
-                class="button" style="font-size: 10px; padding: 0 5px 0 5px; background-color: #${label.color};"
-                >${label.name}</a>`
-            }).join('\n')
-        }</td>
-        <td title="Not scored">${issue.assignee ? `<a href="${issue.assignee.html_url}"><img width="20" height="20" style="display:inline-block;" class="round" src="${issue.assignee.avatar_url}"> ${issue.assignee.login}</a>` : ''}</td>
-        <td title="${getCreatedAtScore(settings, issue).toFixed(2)} points" sorttable_customkey=${moment(issue.created_at).unix()}>${moment(issue.created_at).fromNow()}</td>
-        <td title="Not scored" sorttable_customkey=${moment(issue.updated_at).unix()}>${moment(issue.updated_at).fromNow()}</td>
-        <td>${getScore(settings, issue).toFixed(1)}</td>
-        </tr>
-        `).join('\n');
+        console.log(e);
     });
-});
+}
+
+init();
 
 </script>
 

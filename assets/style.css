@@ -42,6 +42,10 @@ table { border-collapse: collapse; border-spacing:0; }
 :focus { outline:0; }
 
 
+.content {
+  margin: 50px;
+}
+
 *, *:after, *:before {
   -webkit-box-sizing:border-box;
      -moz-box-sizing:border-box;
@@ -3577,7 +3581,8 @@ img.inline, .inline           { display:inline-block; }
   z-index:10;
   }
 .loading:before {
-  background:transparent;
+  background:#333;
+  opacity: 0.7;
   left:0;
   top:0;
   width:100%;
