@@ -120,7 +120,7 @@ function getParam(name) {
 function getHash() {
     const match = window.location.hash.match(/#!([a-zA-Z0-9-_]+\/[a-zA-Z0-9-_\.]+)/);
     if (!match) {
-        showError('<strong>No repository specified.</strong> Please append a repository name as a URL fragment like <a href="https://mapbox.github.io/top-issues/#!mapbox/mapbox-gl-js">https://mapbox.github.io/top-issues/#!mapbox/mapbox-gl-js</a>')
+        showError('<strong>No repository specified.</strong> Please append a repository name as a URL fragment like <a href="https://mlabieniec.github.io/top-issues/#!aws-amplify/amplify-js">https://mlabieniec.github.io/top-issues/#!aws-amplify/amplify-js</a> or click a link above.')
     }
     return match[1];
 }
