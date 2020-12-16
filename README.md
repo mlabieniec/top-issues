@@ -23,7 +23,7 @@ https://mapbox.github.io/top-issues/?github_username=USERNAME&github_access_toke
 
 To use this tool with a private repo, append `github_username` and `github_access_token` parameters to the URL.
 ```
-https://mapbox.github.io/top-issues/?github_username=USERNAME&github_access_token=ACCESS_TOKEN#!secret-agent/top-secret-stuff
+https://mlabieniec.github.io/top-issues/?github_username=USERNAME&github_access_token=ACCESS_TOKEN#!secret-agent/top-secret-stuff
 ```
 
 ## `.topissuesrc`
